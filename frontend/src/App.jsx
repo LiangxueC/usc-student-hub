@@ -3,6 +3,7 @@ import { useAuth } from "./hooks/useAuth";
 import Login from "./pages/Login";
 import Navbar from "./components/Navbar";
 import Classes from "./pages/Classes";
+import Assignments from "./pages/Assignments";
 
 export default function App() {
   const { session, loading } = useAuth();
@@ -15,6 +16,7 @@ export default function App() {
       <Navbar userEmail={session.user.email} />
       <Routes>
         <Route path="/" element={<Classes />} />
+        <Route path="/assignments" element={<Assignments />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
