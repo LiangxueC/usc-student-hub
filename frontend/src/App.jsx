@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Navbar from "./components/Navbar";
 import Classes from "./pages/Classes";
 import Assignments from "./pages/Assignments";
+import Todos from "./pages/Todos";
 
 export default function App() {
   const { session, loading } = useAuth();
@@ -17,6 +18,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Classes />} />
         <Route path="/assignments" element={<Assignments />} />
+        <Route path="/todos" element={<Todos />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
