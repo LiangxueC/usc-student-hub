@@ -17,7 +17,7 @@ export default function Assignments() {
         apiFetch("/classes/"),
         apiFetch("/grade-categories/"),
       ]);
-      setAssignments(asgns);
+      setAssignments(sortByDueDate(asgns));
       setClasses(cls);
       setCategories(cats);
     } catch (e) {
@@ -42,7 +42,15 @@ export default function Assignments() {
       method: "PATCH",
       body: JSON.stringify({ is_done: true, grade }),
     });
-    setAssignments((prev) => prev.map((a) => (a.id === id ? updated : a)));
+    setAssignments((prev) => sortByDueDate(prev.map((a) => (a.id === id ? updated : a))));
+  }
+
+  async function handleMarkUndone(id) {
+    const updated = await apiFetch(`/assignments/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ is_done: false, grade: null }),
+    });
+    setAssignments((prev) => sortByDueDate(prev.map((a) => (a.id === id ? updated : a))));
   }
 
   async function handleDelete(id) {
@@ -72,6 +80,7 @@ export default function Assignments() {
                 key={a.id}
                 assignment={a}
                 onMarkDone={handleMarkDone}
+                onMarkUndone={handleMarkUndone}
                 onDelete={handleDelete}
               />
             ))}
@@ -84,6 +93,8 @@ export default function Assignments() {
 
 function sortByDueDate(arr) {
   return [...arr].sort((a, b) => {
+    // Done items always go below undone
+    if (a.is_done !== b.is_done) return a.is_done ? 1 : -1;
     if (!a.due_date) return 1;
     if (!b.due_date) return -1;
     return a.due_date.localeCompare(b.due_date);

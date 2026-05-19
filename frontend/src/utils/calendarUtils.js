@@ -36,8 +36,9 @@ function parseDays(daysStr) {
   for (const part of str.split(/[/,\s]+/).filter(Boolean)) {
     if (DAY_MAP[part] !== undefined) {
       days.add(DAY_MAP[part]);
-    } else {
-      // Parse concatenated abbreviations like "MWF" or "TR"
+    } else if (/^[a-z]+$/.test(part) && part.length <= 7) {
+      // Only try concatenated parsing (e.g. "MWF", "TR") for short all-alpha tokens
+      // to avoid false positives from words like "lecture" or "section"
       let i = 0;
       while (i < part.length) {
         const two = part.slice(i, i + 2);
@@ -75,26 +76,32 @@ export function parseMeetingTimesStr(str) {
   //   "2:00-3:20pm"          "10:00am-11:50am"
   //   "2:00 PM - 3:20 PM"    "9am-10am"
   //   "MWF 10:00-10:50am"    "Tue/Thu 3:30-4:50pm"
-  // Minutes are optional on both sides; am/pm is optional on start (inherited from end).
-  // End time must have am/pm so we can resolve ambiguity.
+  //   "14:00-15:30"          (24-hour, no am/pm)
+  // am/pm is optional on both sides; if only end has it, start inherits it.
+  // Supports hyphen, en dash, and em dash as separators.
   const timeRangeRegex =
-    /(\d{1,2}(?::\d{2})?\s*(?:[ap]m)?)\s*[-–]\s*(\d{1,2}(?::\d{2})?\s*[ap]m)/i;
+    /(\d{1,2}(?::\d{2})?\s*(?:[ap]m)?)\s*[-–—]\s*(\d{1,2}(?::\d{2})?\s*(?:[ap]m)?)/i;
 
   const timeMatch = str.match(timeRangeRegex);
   if (!timeMatch) return null;
 
   const startTimeStr = timeMatch[1].trim();
   const endTimeStr   = timeMatch[2].trim();
-  const endAmPm      = /pm/i.test(endTimeStr) ? "pm" : "am";
+  // Inherit am/pm from end to start when start omits it
+  const endAmPm = /pm/i.test(endTimeStr) ? "pm" : (/am/i.test(endTimeStr) ? "am" : "");
 
-  // Days = everything before the matched time range (not just before the first digit)
+  // Try days before the time range first, then after (handles both orderings)
   const timeIdx = str.indexOf(timeMatch[0]);
-  const daysStr = str.slice(0, timeIdx).trim();
-  const days = parseDays(daysStr);
+  let daysStr = str.slice(0, timeIdx).trim();
+  let days = parseDays(daysStr);
+  if (!days.length) {
+    daysStr = str.slice(timeIdx + timeMatch[0].length).trim();
+    days = parseDays(daysStr);
+  }
   if (!days.length) return null;
 
   const endTime   = parseTime(endTimeStr, "");
-  const startTime = parseTime(startTimeStr, endAmPm); // inherit am/pm from end if missing
+  const startTime = parseTime(startTimeStr, endAmPm);
   if (!startTime || !endTime) return null;
 
   return {

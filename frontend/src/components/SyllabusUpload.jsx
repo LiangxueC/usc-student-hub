@@ -153,7 +153,15 @@ function PreviewModal({ initialData, saving, onConfirm, onDiscard, error }) {
         <Section label="Class Info">
           <InfoRow label="Name" value={data.class_name} />
           <InfoRow label="Location" value={data.location} />
-          <InfoRow label="Meeting Times" value={data.meeting_times} />
+          <div style={s.infoRow}>
+            <span style={s.infoLabel}>Meeting Times</span>
+            <input
+              style={{ ...s.cellInput, flex: 1 }}
+              value={data.meeting_times ?? ""}
+              onChange={(e) => setData((prev) => ({ ...prev, meeting_times: e.target.value }))}
+              placeholder="e.g. MWF 10:00-10:50am or Tue/Thu 2:00-3:20pm"
+            />
+          </div>
           <InfoRow label="Semester" value={data.semester} />
         </Section>
 

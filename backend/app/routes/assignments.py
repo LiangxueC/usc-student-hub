@@ -49,7 +49,7 @@ async def update_assignment(
     assignment_id: str, body: AssignmentUpdate, token: str = Depends(get_token)
 ):
     sb = get_supabase(token)
-    updates = body.model_dump(exclude_none=True)
+    updates = body.model_dump(exclude_unset=True)
     sb.table("assignments").update(updates).eq("id", assignment_id).execute()
     result = sb.table("assignments").select(SELECT).eq("id", assignment_id).execute()
     return result.data[0]

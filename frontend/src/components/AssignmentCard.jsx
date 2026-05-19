@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function AssignmentCard({ assignment, onMarkDone, onDelete }) {
+export default function AssignmentCard({ assignment, onMarkDone, onMarkUndone, onDelete }) {
   const [showGrade, setShowGrade] = useState(false);
   const [gradeInput, setGradeInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -18,6 +18,20 @@ export default function AssignmentCard({ assignment, onMarkDone, onDelete }) {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleUndo() {
+    setSaving(true);
+    try {
+      await onMarkUndone(id);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function openEditGrade() {
+    setGradeInput(grade != null ? String(grade) : "");
+    setShowGrade(true);
   }
 
   return (
@@ -39,11 +53,21 @@ export default function AssignmentCard({ assignment, onMarkDone, onDelete }) {
               Mark Done
             </button>
           )}
+          {is_done && !showGrade && (
+            <>
+              <button style={s.editBtn} onClick={openEditGrade} disabled={saving}>
+                Edit Grade
+              </button>
+              <button style={s.undoBtn} onClick={handleUndo} disabled={saving}>
+                Undo
+              </button>
+            </>
+          )}
           <button style={s.delBtn} onClick={() => onDelete(id)} title="Delete">×</button>
         </div>
       </div>
 
-      {showGrade && !is_done && (
+      {showGrade && (
         <div style={s.gradeRow}>
           <input
             style={s.gradeInput}
@@ -98,6 +122,15 @@ const s = {
   doneBtn: {
     padding: "5px 12px", borderRadius: "6px", border: "1px solid #e5e4e7",
     background: "#fff", fontSize: "13px", cursor: "pointer", fontWeight: 500, whiteSpace: "nowrap",
+  },
+  editBtn: {
+    padding: "5px 10px", borderRadius: "6px", border: "1px solid #e5e4e7",
+    background: "#fff", fontSize: "13px", cursor: "pointer", fontWeight: 500, whiteSpace: "nowrap",
+  },
+  undoBtn: {
+    padding: "5px 10px", borderRadius: "6px", border: "1px solid #fca5a5",
+    background: "#fff5f5", fontSize: "13px", cursor: "pointer", fontWeight: 500,
+    color: "#dc2626", whiteSpace: "nowrap",
   },
   delBtn: {
     background: "none", border: "none", cursor: "pointer",
