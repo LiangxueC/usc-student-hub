@@ -15,6 +15,12 @@ export default function Navbar({ userEmail }) {
         <NavLink to="/todos" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
           Todos
         </NavLink>
+        <NavLink to="/calendar" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
+          Calendar
+        </NavLink>
+        <NavLink to="/grades" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
+          Grades
+        </NavLink>
       </div>
       <div style={s.right}>
         <span style={s.email}>{userEmail}</span>

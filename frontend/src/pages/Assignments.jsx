@@ -6,17 +6,20 @@ import AssignmentCard from "../components/AssignmentCard";
 export default function Assignments() {
   const [assignments, setAssignments] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   async function load() {
     try {
-      const [asgns, cls] = await Promise.all([
+      const [asgns, cls, cats] = await Promise.all([
         apiFetch("/assignments/"),
         apiFetch("/classes/"),
+        apiFetch("/grade-categories/"),
       ]);
       setAssignments(asgns);
       setClasses(cls);
+      setCategories(cats);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -52,7 +55,7 @@ export default function Assignments() {
   return (
     <div style={s.page}>
       <h2 style={s.title}>Assignments</h2>
-      <AddAssignmentForm classes={classes} onAdd={handleAdd} />
+      <AddAssignmentForm classes={classes} categories={categories} onAdd={handleAdd} />
 
       {loading && <p style={s.msg}>Loading…</p>}
       {error && <p style={{ ...s.msg, color: "red" }}>{error}</p>}

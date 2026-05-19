@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../api/client";
 import AddClassForm from "../components/AddClassForm";
 import ClassCard from "../components/ClassCard";
+import SyllabusUpload from "../components/SyllabusUpload";
 
 export default function Classes() {
   const [classes, setClasses] = useState([]);
@@ -34,10 +35,15 @@ export default function Classes() {
     setClasses((prev) => prev.filter((c) => c.id !== id));
   }
 
+  function handleClassSaved(cls) {
+    setClasses((prev) => [cls, ...prev]);
+  }
+
   return (
     <div style={s.page}>
       <div style={s.header}>
         <h2 style={s.title}>My Classes</h2>
+        <SyllabusUpload onClassSaved={handleClassSaved} />
       </div>
       <AddClassForm onAdd={handleAdd} />
       {loading && <p style={s.msg}>Loading…</p>}
