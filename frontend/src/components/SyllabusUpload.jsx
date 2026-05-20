@@ -96,6 +96,21 @@ export default function SyllabusUpload({ onClassSaved }) {
         });
       }
 
+      // 5. Save to shared public syllabus database (best-effort)
+      if (editedPreview.class_name?.trim()) {
+        try {
+          await apiFetch("/syllabus-search/", {
+            method: "POST",
+            body: JSON.stringify({
+              class_name: editedPreview.class_name.trim(),
+              class_code: editedPreview.class_code?.trim() || null,
+              semester: editedPreview.semester?.trim() || null,
+              gemini_json: editedPreview,
+            }),
+          });
+        } catch (_) {}
+      }
+
       onClassSaved(cls);
       setPreview(null);
     } catch (err) {

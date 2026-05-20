@@ -24,6 +24,9 @@ export default function Navbar({ userEmail }) {
         <NavLink to="/focus" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
           Focus
         </NavLink>
+        <NavLink to="/syllabus-search" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
+          Syllabus DB
+        </NavLink>
       </div>
       <div style={s.right}>
         <span style={s.email}>{userEmail}</span>

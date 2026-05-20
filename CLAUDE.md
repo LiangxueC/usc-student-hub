@@ -63,6 +63,7 @@ frontend/src/
     Calendar.jsx                  # react-big-calendar with class blocks + due dates
     Grades.jsx                    # Grade calculator (weighted categories)
     FocusTimer.jsx                # Dark-theme countdown timer with session log (/focus)
+    SyllabusSearch.jsx            # Public syllabus search + import (/syllabus-search)
     Login.jsx                     # Google OAuth sign-in page
   components/
     AddClassForm.jsx              # Inline form to manually add a class
@@ -77,6 +78,7 @@ frontend/src/
     Navbar.jsx                    # Top nav with page links + sign-out
   utils/
     calendarUtils.js              # parseMeetingTimesStr(), buildAllEvents(), PALETTE
+    saveClassFromGemini.js        # Shared utility: create class+categories+assignments+OH from Gemini JSON
   hooks/
     useAuth.js                    # Supabase session listener
 ```
@@ -93,6 +95,9 @@ todos           id, user_id, title, due_date, is_done, created_at
 grade_categories  id, user_id, class_id→classes, name, weight (float 0–100)
 office_hours    id, user_id, class_id→classes, day (text), start_time (text),
                 end_time (text), location (text), created_at
+public_syllabi  id, uploaded_by_user_id, class_name, class_code (nullable),
+                semester, raw_text, gemini_json (jsonb), created_at
+                RLS: SELECT for all authenticated users; INSERT/UPDATE for owner only
 ```
 
 **Supabase migration SQL for `office_hours`:**
@@ -129,6 +134,8 @@ create policy "Users manage own office hours" on office_hours for all
 | GET/POST | /office-hours/ | List all / create office hours entry |
 | DELETE | /office-hours/{id} | Delete office hours entry |
 | POST | /upload-syllabus/ | PDF → Gemini → returns structured JSON |
+| GET | /syllabus-search/?q= | Case-insensitive search on class_name + class_code in public_syllabi |
+| POST | /syllabus-search/ | Save confirmed syllabus to public_syllabi (called at confirm time, not parse time) |
 
 **Assignment PATCH note:** Uses `exclude_unset=True` so `grade: null` can be sent explicitly when undoing a completion.
 
@@ -183,8 +190,16 @@ create policy "Users manage own office hours" on office_hours for all
 
 ### Syllabus parsing
 - `POST /upload-syllabus/` extracts text with PyMuPDF, sends to Gemini
-- Returns: `class_name`, `location`, `meeting_times`, `semester`, `grade_weights[]`, `assignments[]`, `office_hours[]`
+- Returns: `class_name`, `class_code`, `location`, `meeting_times`, `semester`, `grade_weights[]`, `assignments[]`, `office_hours[]`
+- After a successful parse, best-effort upserts a row into `public_syllabi` (keyed on uploaded_by_user_id + class_name + semester)
 - Frontend shows editable preview before saving; saves class → grade categories → assignments → office hours in sequence
+
+### Syllabus DB page (`/syllabus-search`)
+- Search bar with 350ms debounce; queries `GET /syllabus-search/?q=` across class_name and class_code
+- Results as expandable cards: grade weights grid, scrollable assignment list (max-height 240px), office hours, class info
+- "Import to my classes" button calls `saveClassFromGemini(gemini_json, apiFetch)` — the shared utility in `utils/saveClassFromGemini.js`
+- Import status tracked per card: idle → importing → done (link to /classes) or error
+- **Save flow**: `POST /syllabus-search/` is called by `SyllabusUpload.jsx` at confirm time (after user reviews/edits the preview), using the final class_name. This avoids silent failures when Gemini returns null for class_name on the raw parse.
 
 ---
 

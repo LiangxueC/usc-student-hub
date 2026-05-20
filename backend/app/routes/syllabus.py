@@ -13,6 +13,7 @@ router = APIRouter(prefix="/upload-syllabus", tags=["syllabus"])
 PROMPT = """Extract the following from this course syllabus and return ONLY valid JSON with no markdown, no code fences, no extra text:
 {
   "class_name": "string or null",
+  "class_code": "string like CSCI 104 or null",
   "location": "string or null",
   "meeting_times": "string or null",
   "semester": "string or null",
@@ -40,6 +41,7 @@ Rules:
 - grade_weights are grading categories like Homework, Midterm, Final, Quizzes, etc. with their percentage weights.
 - Each assignment's category must exactly match one of the grade_weights category names if possible.
 - If a field is not found, use null. office_hours should be an empty array [] if not found.
+- class_code is the short course identifier like "CSCI 104", "BISC 220L", "ECON 203" — extract from the syllabus header or course title if present.
 - meeting_times MUST use the format "Mon/Wed/Fri 10:00-10:50am" — days as 3-letter abbreviations (Mon, Tue, Wed, Thu, Fri, Sat, Sun) separated by slashes, followed by the time range with a hyphen. Examples: "Tue/Thu 2:00-3:20pm", "Mon/Wed/Fri 10:00-10:50am", "Mon 6:00-8:50pm".
 - office_hours day must be a full English day name (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday).
 - office_hours start_time and end_time must use 12-hour format with AM/PM, e.g. "2:00 PM", "10:30 AM".
