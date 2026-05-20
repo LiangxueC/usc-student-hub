@@ -58,9 +58,11 @@ frontend/src/
   pages/
     Classes.jsx                   # Class list, syllabus upload trigger
     Assignments.jsx               # Assignments grouped by class, sorted done-last
-    Todos.jsx                     # Todo list
+    Todos.jsx                     # (legacy) original flat todo list
+    Matrix.jsx                    # Eisenhower priority matrix (/matrix) — todos + assignments
     Calendar.jsx                  # react-big-calendar with class blocks + due dates
     Grades.jsx                    # Grade calculator (weighted categories)
+    FocusTimer.jsx                # Dark-theme countdown timer with session log (/focus)
     Login.jsx                     # Google OAuth sign-in page
   components/
     AddClassForm.jsx              # Inline form to manually add a class
@@ -89,6 +91,25 @@ assignments     id, user_id, class_id→classes, category_id→grade_categories,
                 title, due_date, grade (float), is_done (bool), created_at
 todos           id, user_id, title, due_date, is_done, created_at
 grade_categories  id, user_id, class_id→classes, name, weight (float 0–100)
+office_hours    id, user_id, class_id→classes, day (text), start_time (text),
+                end_time (text), location (text), created_at
+```
+
+**Supabase migration SQL for `office_hours`:**
+```sql
+create table office_hours (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users not null,
+  class_id uuid references classes(id) on delete cascade not null,
+  day text not null,
+  start_time text not null,
+  end_time text not null,
+  location text not null default '',
+  created_at timestamptz default now()
+);
+alter table office_hours enable row level security;
+create policy "Users manage own office hours" on office_hours for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
 ```
 
 ---
@@ -105,6 +126,8 @@ grade_categories  id, user_id, class_id→classes, name, weight (float 0–100)
 | DELETE | /assignments/{id} | Delete assignment |
 | GET/POST/PATCH/DELETE | /todos/ | Full CRUD for todos |
 | GET/POST/PATCH/DELETE | /grade-categories/ | Full CRUD for grade weight categories |
+| GET/POST | /office-hours/ | List all / create office hours entry |
+| DELETE | /office-hours/{id} | Delete office hours entry |
 | POST | /upload-syllabus/ | PDF → Gemini → returns structured JSON |
 
 **Assignment PATCH note:** Uses `exclude_unset=True` so `grade: null` can be sent explicitly when undoing a completion.
@@ -126,13 +149,28 @@ grade_categories  id, user_id, class_id→classes, name, weight (float 0–100)
 - Undo — marks assignment incomplete, clears grade
 - Delete assignment
 
-### Todos page (`/todos`)
-- Simple todo list with due dates
-- Check off / delete
+### Priority Matrix page (`/matrix`)
+- Eisenhower 2×2 grid: Q1 Do First (urgent+important), Q2 Schedule (not urgent+important), Q3 Delegate (urgent+not important), Q4 Eliminate (not urgent+not important)
+- Shows all undone todos and assignments due within 14 days (undated items always shown in Q2/Q4)
+- Assignments = Important; due ≤ 2 days = Urgent
+- Drag-and-drop between quadrants via `@dnd-kit/core`; overrides persisted to `localStorage` (`matrix-overrides` key)
+- Checking an assignment card prompts for grade before marking done; todos mark done immediately
+- Collapsible "Completed" panel at the bottom lists done items with Undo button
+- AddTodoForm embedded in Q3
+
+### Focus Timer page (`/focus`)
+- Dark-theme full-screen countdown timer (no Pomodoro presets)
+- Click-to-edit H/M/S fields; Start / Pause / Resume / Reset controls
+- Optional session label ("What are you working on?")
+- On completion: plays a soft ascending chime (C5→E5→G5) via Web Audio API, shows "Session complete!" banner
+- Tab title shows remaining time while running (e.g. `25:00 — Focus`); restored on pause/reset/complete
+- Session log in `localStorage` (`focus_sessions` key): last 10 sessions with label, duration, timestamp. "Clear history" button.
 
 ### Calendar page (`/calendar`)
 - Week and month views via `react-big-calendar`
 - Class meeting blocks generated from `meeting_times` string (4 weeks back → 20 weeks forward)
+- Office hours blocks generated weekly from the `office_hours` table; styled with dashed border in the class's color
+- Overlapping events (e.g. class and office hours at the same time) render side by side automatically via react-big-calendar's built-in overlap layout
 - Assignment due dates shown as all-day events
 - Todo due dates shown as all-day events
 - Click any event → popup with details; assignments can be marked done from popup
@@ -145,19 +183,20 @@ grade_categories  id, user_id, class_id→classes, name, weight (float 0–100)
 
 ### Syllabus parsing
 - `POST /upload-syllabus/` extracts text with PyMuPDF, sends to Gemini
-- Returns: `class_name`, `location`, `meeting_times`, `semester`, `grade_weights[]`, `assignments[]`
-- Frontend shows editable preview before saving; saves class → grade categories → assignments in sequence
+- Returns: `class_name`, `location`, `meeting_times`, `semester`, `grade_weights[]`, `assignments[]`, `office_hours[]`
+- Frontend shows editable preview before saving; saves class → grade categories → assignments → office hours in sequence
 
 ---
 
 ## Key utilities
 
 ### `parseMeetingTimesStr(str)` in `calendarUtils.js`
-Parses free-text meeting times like `"MWF 10:00-10:50am"` or `"Tue/Thu 2:00 PM - 3:20 PM"` into `{ days, startHour, startMin, endHour, endMin }`.
+Parses meeting times like `"Mon/Wed/Fri 10:00-10:50am"` or `"Tue/Thu 2:00-3:20pm"` into `{ days, startHour, startMin, endHour, endMin }`.
+- Canonical format: 3-letter abbreviations separated by slashes (`Mon/Wed/Fri`, `Tue/Thu`)
+- Also accepts comma- or space-separated days and full names (`Monday Wednesday Friday`)
 - Accepts hyphen, en dash, em dash as time separators
 - AM/PM optional on both sides (inherits end → start; treats bare numbers as 24-hour)
 - Tries days before the time range, then after (handles both orderings)
-- Day parser handles full names (`Monday`), abbreviations (`Mon`, `M`), and concatenated strings (`MWF`, `TR`, `TTh`)
 
 ### Auth pattern
 All API calls go through `apiFetch()` which attaches `Authorization: Bearer <supabase_access_token>`. Backend extracts and validates the token in `get_token()` / `get_user_id()`, then creates a user-scoped Supabase client so RLS policies apply automatically.

@@ -21,21 +21,26 @@ const SCROLL_TO = (() => { const d = new Date(); d.setHours(8, 0, 0, 0); return 
 
 // Custom event card shown inside the week/day time grid
 function EventCard({ event }) {
-  const c = event.color || {};
   const isClass = event.type === "class";
+  const isOH = event.type === "office_hours";
   const isTimed = !event.allDay;
 
   return (
     <div style={{ lineHeight: 1.35, overflow: "hidden", height: "100%" }}>
       <div style={{ fontWeight: 700, fontSize: "12px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-        {isClass ? event.resource.name : event.title}
+        {isClass ? event.resource.name : isOH ? "Office Hours" : event.title}
       </div>
-      {isTimed && isClass && event.resource.location && (
+      {isTimed && isOH && event.resource.classes?.name && (
+        <div style={{ fontSize: "11px", opacity: 0.85, marginTop: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {event.resource.classes.name}
+        </div>
+      )}
+      {isTimed && (isClass || isOH) && event.resource.location && (
         <div style={{ fontSize: "11px", opacity: 0.85, marginTop: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           📍 {event.resource.location}
         </div>
       )}
-      {isTimed && isClass && (
+      {isTimed && (isClass || isOH) && (
         <div style={{ fontSize: "11px", opacity: 0.75, marginTop: "1px" }}>
           {fmt12(event.start)} – {fmt12(event.end)}
         </div>
@@ -52,6 +57,7 @@ export default function CalendarPage() {
   const [classes, setClasses] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [todos, setTodos] = useState([]);
+  const [officeHours, setOfficeHours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState(new Date());
   const [view, setView] = useState(Views.WEEK);
@@ -60,14 +66,16 @@ export default function CalendarPage() {
 
   async function load() {
     try {
-      const [cls, asgns, tdos] = await Promise.all([
+      const [cls, asgns, tdos, ohs] = await Promise.all([
         apiFetch("/classes/"),
         apiFetch("/assignments/"),
         apiFetch("/todos/"),
+        apiFetch("/office-hours/"),
       ]);
       setClasses(cls);
       setAssignments(asgns);
       setTodos(tdos);
+      setOfficeHours(ohs);
     } finally {
       setLoading(false);
     }
@@ -94,12 +102,25 @@ export default function CalendarPage() {
 
   const colorMap = useMemo(() => buildColorMap(classes), [classes]);
   const events = useMemo(
-    () => buildAllEvents(classes, assignments, todos, colorMap),
-    [classes, assignments, todos, colorMap]
+    () => buildAllEvents(classes, assignments, todos, colorMap, officeHours),
+    [classes, assignments, todos, colorMap, officeHours]
   );
 
   function eventPropGetter(event) {
     const c = event.color || {};
+    if (event.type === "office_hours") {
+      return {
+        style: {
+          backgroundColor: c.bg || "#f3f4f6",
+          color: c.text || "#374151",
+          border: `1.5px dashed ${c.border || "#6b7280"}`,
+          borderRadius: "5px",
+          padding: "3px 6px",
+          boxSizing: "border-box",
+          opacity: 0.82,
+        },
+      };
+    }
     return {
       style: {
         backgroundColor: c.bg || "#f3f4f6",

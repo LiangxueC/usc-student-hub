@@ -25,13 +25,24 @@ PROMPT = """Extract the following from this course syllabus and return ONLY vali
       "due_date": "YYYY-MM-DD or null",
       "category": "string matching one of the grade_weights category names, or null"
     }
+  ],
+  "office_hours": [
+    {
+      "day": "string (full day name, e.g. Monday)",
+      "start_time": "string (e.g. 2:00 PM)",
+      "end_time": "string (e.g. 3:00 PM)",
+      "location": "string or empty string"
+    }
   ]
 }
 
 Rules:
 - grade_weights are grading categories like Homework, Midterm, Final, Quizzes, etc. with their percentage weights.
 - Each assignment's category must exactly match one of the grade_weights category names if possible.
-- If a field is not found, use null.
+- If a field is not found, use null. office_hours should be an empty array [] if not found.
+- meeting_times MUST use the format "Mon/Wed/Fri 10:00-10:50am" — days as 3-letter abbreviations (Mon, Tue, Wed, Thu, Fri, Sat, Sun) separated by slashes, followed by the time range with a hyphen. Examples: "Tue/Thu 2:00-3:20pm", "Mon/Wed/Fri 10:00-10:50am", "Mon 6:00-8:50pm".
+- office_hours day must be a full English day name (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday).
+- office_hours start_time and end_time must use 12-hour format with AM/PM, e.g. "2:00 PM", "10:30 AM".
 
 Syllabus text:
 """

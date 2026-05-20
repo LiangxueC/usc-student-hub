@@ -4,8 +4,9 @@ import Login from "./pages/Login";
 import Navbar from "./components/Navbar";
 import Classes from "./pages/Classes";
 import Assignments from "./pages/Assignments";
-import Todos from "./pages/Todos";
+import Matrix from "./pages/Matrix";
 import CalendarPage from "./pages/Calendar";
+import FocusTimer from "./pages/FocusTimer";
 import Grades from "./pages/Grades";
 
 export default function App() {
@@ -20,9 +21,11 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Classes />} />
         <Route path="/assignments" element={<Assignments />} />
-        <Route path="/todos" element={<Todos />} />
+        <Route path="/matrix" element={<Matrix />} />
+        <Route path="/todos" element={<Matrix />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/grades" element={<Grades />} />
+        <Route path="/focus" element={<FocusTimer />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

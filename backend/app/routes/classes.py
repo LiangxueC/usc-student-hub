@@ -13,6 +13,13 @@ class ClassCreate(BaseModel):
     semester: str | None = None
 
 
+class ClassUpdate(BaseModel):
+    name: str | None = None
+    location: str | None = None
+    meeting_times: str | None = None
+    semester: str | None = None
+
+
 @router.get("/")
 async def list_classes(token: str = Depends(get_token)):
     sb = get_supabase(token)
@@ -31,6 +38,14 @@ async def create_class(body: ClassCreate, token: str = Depends(get_token)):
         "meeting_times": body.meeting_times,
         "semester": body.semester,
     }).execute()
+    return result.data[0]
+
+
+@router.patch("/{class_id}")
+async def update_class(class_id: str, body: ClassUpdate, token: str = Depends(get_token)):
+    sb = get_supabase(token)
+    updates = body.model_dump(exclude_unset=True)
+    result = sb.table("classes").update(updates).eq("id", class_id).execute()
     return result.data[0]
 
 

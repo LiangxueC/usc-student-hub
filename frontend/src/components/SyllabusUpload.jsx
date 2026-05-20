@@ -24,6 +24,10 @@ export default function SyllabusUpload({ onClassSaved }) {
           ...g,
           _key: Math.random(),
         })),
+        office_hours: (data.office_hours ?? []).map((oh) => ({
+          ...oh,
+          _key: Math.random(),
+        })),
       });
     } catch (err) {
       setError(err.message);
@@ -73,6 +77,21 @@ export default function SyllabusUpload({ onClassSaved }) {
             class_id: cls.id,
             category_id,
             due_date: a.due_date ?? null,
+          }),
+        });
+      }
+
+      // 4. Create office hours
+      for (const oh of editedPreview.office_hours ?? []) {
+        if (!oh.day?.trim() || !oh.start_time?.trim() || !oh.end_time?.trim()) continue;
+        await apiFetch("/office-hours/", {
+          method: "POST",
+          body: JSON.stringify({
+            class_id: cls.id,
+            day: oh.day.trim(),
+            start_time: oh.start_time.trim(),
+            end_time: oh.end_time.trim(),
+            location: oh.location?.trim() ?? "",
           }),
         });
       }
@@ -144,6 +163,29 @@ function PreviewModal({ initialData, saving, onConfirm, onDiscard, error }) {
     }));
   }
 
+  function updateOH(key, field, value) {
+    setData((prev) => ({
+      ...prev,
+      office_hours: (prev.office_hours ?? []).map((oh) =>
+        oh._key === key ? { ...oh, [field]: value } : oh
+      ),
+    }));
+  }
+
+  function addOH() {
+    setData((prev) => ({
+      ...prev,
+      office_hours: [...(prev.office_hours ?? []), { _key: Math.random(), day: "", start_time: "", end_time: "", location: "" }],
+    }));
+  }
+
+  function removeOH(key) {
+    setData((prev) => ({
+      ...prev,
+      office_hours: (prev.office_hours ?? []).filter((oh) => oh._key !== key),
+    }));
+  }
+
   return (
     <div style={s.overlay}>
       <div style={s.modal}>
@@ -159,7 +201,7 @@ function PreviewModal({ initialData, saving, onConfirm, onDiscard, error }) {
               style={{ ...s.cellInput, flex: 1 }}
               value={data.meeting_times ?? ""}
               onChange={(e) => setData((prev) => ({ ...prev, meeting_times: e.target.value }))}
-              placeholder="e.g. MWF 10:00-10:50am or Tue/Thu 2:00-3:20pm"
+              placeholder="e.g. Mon/Wed/Fri 10:00-10:50am or Tue/Thu 2:00-3:20pm"
             />
           </div>
           <InfoRow label="Semester" value={data.semester} />
@@ -229,6 +271,63 @@ function PreviewModal({ initialData, saving, onConfirm, onDiscard, error }) {
             </table>
           </Section>
         )}
+
+        {/* Editable office hours */}
+        <Section label="Office Hours (editable)">
+          <table style={s.table}>
+            <thead>
+              <tr>
+                <th style={s.th}>Day</th>
+                <th style={s.th}>Start</th>
+                <th style={s.th}>End</th>
+                <th style={s.th}>Location</th>
+                <th style={{ ...s.th, width: "36px" }} />
+              </tr>
+            </thead>
+            <tbody>
+              {(data.office_hours ?? []).map((oh) => (
+                <tr key={oh._key}>
+                  <td style={s.td}>
+                    <input
+                      style={s.cellInput}
+                      value={oh.day}
+                      onChange={(e) => updateOH(oh._key, "day", e.target.value)}
+                      placeholder="Monday"
+                    />
+                  </td>
+                  <td style={s.td}>
+                    <input
+                      style={s.cellInput}
+                      value={oh.start_time}
+                      onChange={(e) => updateOH(oh._key, "start_time", e.target.value)}
+                      placeholder="2:00 PM"
+                    />
+                  </td>
+                  <td style={s.td}>
+                    <input
+                      style={s.cellInput}
+                      value={oh.end_time}
+                      onChange={(e) => updateOH(oh._key, "end_time", e.target.value)}
+                      placeholder="3:00 PM"
+                    />
+                  </td>
+                  <td style={s.td}>
+                    <input
+                      style={s.cellInput}
+                      value={oh.location ?? ""}
+                      onChange={(e) => updateOH(oh._key, "location", e.target.value)}
+                      placeholder="e.g. SAL 213"
+                    />
+                  </td>
+                  <td style={s.td}>
+                    <button style={s.removeBtn} onClick={() => removeOH(oh._key)}>×</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button style={s.addRowBtn} onClick={addOH}>+ Add row</button>
+        </Section>
 
         {error && <p style={s.error}>{error}</p>}
 

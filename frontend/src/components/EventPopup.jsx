@@ -54,7 +54,9 @@ export default function EventPopup({ event, pos, onClose, onMarkDone }) {
 
           {/* Title */}
           <p style={s.name}>
-            {type === "class" ? resource.name : resource.title ?? resource.name}
+            {type === "class" ? resource.name
+              : type === "office_hours" ? (resource.classes?.name ?? "Office Hours")
+              : resource.title ?? resource.name}
           </p>
 
           {/* Class details */}
@@ -103,6 +105,16 @@ export default function EventPopup({ event, pos, onClose, onMarkDone }) {
             </div>
           )}
 
+          {/* Office hours details */}
+          {type === "office_hours" && (
+            <div style={s.details}>
+              {resource.classes?.name && <Row icon="📚" text={resource.classes.name} />}
+              <Row icon="🕐" text={`${resource.start_time} – ${resource.end_time}`} />
+              {resource.day && <Row icon="📅" text={resource.day} />}
+              {resource.location && <Row icon="📍" text={resource.location} />}
+            </div>
+          )}
+
           {/* Todo details */}
           {type === "todo" && (
             <div style={s.details}>
@@ -130,7 +142,7 @@ function fmtDate(iso) {
   return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-const LABELS = { class: "Class", assignment: "Assignment", todo: "Todo" };
+const LABELS = { class: "Class", assignment: "Assignment", todo: "Todo", office_hours: "Office Hours" };
 
 const s = {
   backdrop: {

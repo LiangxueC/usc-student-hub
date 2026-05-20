@@ -12,14 +12,17 @@ export default function Navbar({ userEmail }) {
         <NavLink to="/assignments" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
           Assignments
         </NavLink>
-        <NavLink to="/todos" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
-          Todos
+        <NavLink to="/matrix" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
+          Priority
         </NavLink>
         <NavLink to="/calendar" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
           Calendar
         </NavLink>
         <NavLink to="/grades" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
           Grades
+        </NavLink>
+        <NavLink to="/focus" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
+          Focus
         </NavLink>
       </div>
       <div style={s.right}>

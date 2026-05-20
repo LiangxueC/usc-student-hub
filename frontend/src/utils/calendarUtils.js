@@ -32,28 +32,11 @@ export function buildColorMap(classes) {
 function parseDays(daysStr) {
   const str = daysStr.toLowerCase().trim();
   const days = new Set();
-
   for (const part of str.split(/[/,\s]+/).filter(Boolean)) {
     if (DAY_MAP[part] !== undefined) {
       days.add(DAY_MAP[part]);
-    } else if (/^[a-z]+$/.test(part) && part.length <= 7) {
-      // Only try concatenated parsing (e.g. "MWF", "TR") for short all-alpha tokens
-      // to avoid false positives from words like "lecture" or "section"
-      let i = 0;
-      while (i < part.length) {
-        const two = part.slice(i, i + 2);
-        if (["th", "tu", "su", "sa"].includes(two) && DAY_MAP[two] !== undefined) {
-          days.add(DAY_MAP[two]);
-          i += 2;
-        } else {
-          const one = part[i];
-          if (DAY_MAP[one] !== undefined) days.add(DAY_MAP[one]);
-          i++;
-        }
-      }
     }
   }
-
   return [...days].sort((a, b) => a - b);
 }
 
@@ -118,7 +101,50 @@ function isoToDate(iso) {
   return new Date(y, m - 1, d);
 }
 
-export function buildAllEvents(classes, assignments, todos, colorMap) {
+export function buildOfficeHoursEvents(officeHours, colorMap) {
+  const events = [];
+  const today = new Date();
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay() - 7 * 4);
+  weekStart.setHours(0, 0, 0, 0);
+  const WEEK_COUNT = 24;
+
+  for (const oh of officeHours) {
+    const days = parseDays(oh.day ?? "");
+    if (!days.length) continue;
+    const startTime = parseTime(oh.start_time ?? "", "");
+    const endTime = parseTime(oh.end_time ?? "", "");
+    if (!startTime || !endTime) continue;
+
+    const color = oh.class_id && colorMap[oh.class_id] ? colorMap[oh.class_id] : PALETTE[0];
+
+    for (let week = 0; week < WEEK_COUNT; week++) {
+      const dow = days[0];
+      const base = new Date(weekStart);
+      base.setDate(weekStart.getDate() + week * 7 + dow);
+
+      const start = new Date(base);
+      start.setHours(startTime.hours, startTime.minutes, 0, 0);
+      const end = new Date(base);
+      end.setHours(endTime.hours, endTime.minutes, 0, 0);
+
+      events.push({
+        id: `oh-${oh.id}-w${week}`,
+        title: "Office Hours",
+        start,
+        end,
+        allDay: false,
+        type: "office_hours",
+        color,
+        resource: oh,
+      });
+    }
+  }
+
+  return events;
+}
+
+export function buildAllEvents(classes, assignments, todos, colorMap, officeHours = []) {
   const events = [];
 
   // Recurring class meeting blocks: 4 weeks back → 20 weeks forward
@@ -195,6 +221,9 @@ export function buildAllEvents(classes, assignments, todos, colorMap) {
       resource: t,
     });
   }
+
+  // Recurring office hours blocks
+  events.push(...buildOfficeHoursEvents(officeHours, colorMap));
 
   return events;
 }
