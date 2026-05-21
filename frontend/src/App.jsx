@@ -9,6 +9,8 @@ import CalendarPage from "./pages/Calendar";
 import FocusTimer from "./pages/FocusTimer";
 import SyllabusSearch from "./pages/SyllabusSearch";
 import Grades from "./pages/Grades";
+import DegreeProgress from "./pages/DegreeProgress";
+import USCNews from "./pages/USCNews";
 
 export default function App() {
   const { session, loading } = useAuth();
@@ -28,6 +30,8 @@ export default function App() {
         <Route path="/grades" element={<Grades />} />
         <Route path="/focus" element={<FocusTimer />} />
         <Route path="/syllabus-search" element={<SyllabusSearch />} />
+        <Route path="/degree" element={<DegreeProgress />} />
+        <Route path="/news" element={<USCNews />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

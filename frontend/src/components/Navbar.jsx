@@ -27,6 +27,12 @@ export default function Navbar({ userEmail }) {
         <NavLink to="/syllabus-search" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
           Syllabus DB
         </NavLink>
+        <NavLink to="/degree" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
+          Degree
+        </NavLink>
+        <NavLink to="/news" style={({ isActive }) => ({ ...s.link, ...(isActive ? s.active : {}) })}>
+          USC News
+        </NavLink>
       </div>
       <div style={s.right}>
         <span style={s.email}>{userEmail}</span>

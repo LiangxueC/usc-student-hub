@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import SUPABASE_URL
-from app.routes import health, assignments, classes, todos, syllabus, grade_categories, office_hours, syllabus_search
+from app.routes import health, assignments, classes, todos, syllabus, grade_categories, office_hours, syllabus_search, degree, usc_news
 
 app = FastAPI(title="USC Student Hub API")
 
@@ -22,3 +22,5 @@ app.include_router(syllabus.router)
 app.include_router(grade_categories.router)
 app.include_router(office_hours.router)
 app.include_router(syllabus_search.router)
+app.include_router(degree.router)
+app.include_router(usc_news.router)

@@ -23,6 +23,24 @@ export async function apiFetch(path, options = {}) {
   return res.json();
 }
 
+export async function uploadAudit(file) {
+  const token = await getToken();
+  const body = new FormData();
+  body.append("file", file);
+
+  const res = await fetch(`${API_URL}/degree/upload-audit`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Upload failed (${res.status})`);
+  }
+  return res.json();
+}
+
 export async function uploadSyllabus(file) {
   const token = await getToken();
   const body = new FormData();
