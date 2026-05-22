@@ -1,0 +1,194 @@
+/* -----------------------------------------------------------------------
+   Custom react-big-calendar overrides — Clean Minimal / Google Calendar style
+   This file is imported IN ADDITION TO the RBC base CSS so it overrides only
+   what we need. Specificity is intentionally kept just high enough.
+   ----------------------------------------------------------------------- */
+
+/* ── Container ─────────────────────────────────────────────────────────── */
+.rbc-calendar {
+  background: #fff;
+  border-radius: 12px;
+  border: 0.5px solid #e5e5e5;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+/* ── Toolbar wrapper (our custom toolbar renders inside here) ──────────── */
+.rbc-toolbar {
+  padding: 0;
+  margin: 0;
+  border-bottom: none;
+  flex-wrap: nowrap;
+}
+/* Hide any default RBC toolbar buttons — we use a fully custom toolbar */
+.rbc-toolbar button {
+  display: none;
+}
+.rbc-toolbar .rbc-toolbar-label {
+  display: none;
+}
+.rbc-btn-group {
+  display: none;
+}
+
+/* ── Week / day view header row ─────────────────────────────────────────── */
+.rbc-time-header {
+  border-bottom: 1px solid #f0f0f0;
+  overflow: visible;
+}
+.rbc-time-header-content {
+  border-left: none;
+  overflow: visible;
+}
+.rbc-header {
+  padding: 6px 4px 8px;
+  border-bottom: none;
+  font-weight: 400;
+  text-align: center;
+  overflow: visible;
+}
+/* Remove vertical lines between day columns in the header */
+.rbc-header + .rbc-header {
+  border-left: none;
+}
+/* Today column in header — subtle tint */
+.rbc-today {
+  background-color: rgba(157, 34, 53, 0.025);
+}
+
+/* ── Time gutter (left side hour labels) ──────────────────────────────── */
+.rbc-time-gutter {
+  background: #fff;
+}
+.rbc-time-gutter .rbc-timeslot-group {
+  border-bottom: none;
+}
+.rbc-time-gutter .rbc-time-slot {
+  font-size: 11px;
+  color: #bbb;
+  text-align: right;
+  padding-right: 8px;
+  border-top: none;
+}
+
+/* ── Hour / half-hour slot lines ─────────────────────────────────────── */
+.rbc-timeslot-group {
+  border-bottom: 0.5px solid #f0f0f0;
+  min-height: 40px;
+}
+/* Half-hour line inside a timeslot group — invisible */
+.rbc-time-slot {
+  border-top: none;
+}
+/* The actual hour line comes from the group border-bottom */
+
+/* ── Day columns: remove vertical separator lines ────────────────────── */
+.rbc-day-slot .rbc-time-slot {
+  border-top: none;
+}
+.rbc-day-slot + .rbc-day-slot,
+.rbc-time-column + .rbc-time-column {
+  border-left: none;
+}
+/* Belt-and-suspenders: remove any remaining day column borders */
+.rbc-time-content > * + * > * {
+  border-left: none;
+}
+.rbc-time-content {
+  border-top: 1px solid #f0f0f0;
+}
+
+/* ── Events ──────────────────────────────────────────────────────────── */
+.rbc-event {
+  padding: 2px 6px;
+  border: none !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  overflow: hidden !important;   /* Bug 1: contain text within the RBC-assigned block */
+  min-width: 0;
+}
+/* Narrow events (when overlapping) — tighter padding */
+.rbc-event.rbc-event-continues-prior,
+.rbc-day-slot .rbc-event {
+  padding: 1px 4px;
+}
+/* Event content container */
+.rbc-event-content {
+  overflow: hidden;
+  min-width: 0;
+}
+/* Bug 2: hide RBC's own built-in time label — our renderer shows time already */
+.rbc-event-label {
+  display: none !important;
+}
+.rbc-event.rbc-selected {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(157, 34, 53, 0.35) !important;
+}
+.rbc-event:focus {
+  outline: none;
+}
+/* Do NOT override event width — RBC manages that for overlap layout */
+
+/* ── All-day row ─────────────────────────────────────────────────────── */
+.rbc-allday-cell {
+  overflow: hidden;
+  padding-top: 6px !important;   /* Bug 3: stop pills from sitting flush under headers */
+}
+.rbc-row.rbc-allday-row {
+  margin-top: 4px !important;
+}
+.rbc-allday-cell .rbc-event {
+  border-radius: 20px !important;
+  padding: 1px 7px;
+  font-size: 10px;
+  border: none !important;
+}
+
+/* ── Month view ──────────────────────────────────────────────────────── */
+.rbc-month-view {
+  border-radius: 0 0 12px 12px;
+  border: none;
+}
+.rbc-month-header {
+  border-bottom: 0.5px solid #f0f0f0;
+}
+.rbc-month-row {
+  border-top: 0.5px solid #f0f0f0;
+}
+.rbc-day-bg + .rbc-day-bg {
+  border-left: 0.5px solid #f0f0f0;
+}
+.rbc-off-range-bg {
+  background: #fafafa;
+}
+.rbc-date-cell {
+  font-size: 12px;
+  color: #555;
+  padding: 4px 6px 2px;
+}
+.rbc-date-cell.rbc-now {
+  font-weight: 700;
+  color: #9D2235;
+}
+.rbc-show-more {
+  font-size: 11px;
+  color: #9D2235;
+  font-weight: 500;
+}
+
+/* ── Current time indicator ──────────────────────────────────────────── */
+.rbc-current-time-indicator {
+  background-color: #9D2235;
+  height: 2px;
+}
+.rbc-current-time-indicator::before {
+  background-color: #9D2235;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: -3px;
+}

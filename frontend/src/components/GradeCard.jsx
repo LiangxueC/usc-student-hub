@@ -50,18 +50,23 @@ function gradeColor(pct) {
 
 export default function GradeCard({ cls, assignments, initialCategories }) {
   const [categories, setCategories] = useState(initialCategories);
+  const [localAssignments, setLocalAssignments] = useState(assignments);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ name: "", weight: "" });
   const [addForm, setAddForm] = useState({ name: "", weight: "" });
   const [showAdd, setShowAdd] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const catData = computeCategories(categories, assignments);
+  // Grade editing
+  const [editingGradeId, setEditingGradeId] = useState(null);
+  const [gradeEditVal, setGradeEditVal] = useState("");
+
+  const catData = computeCategories(categories, localAssignments);
   const { current, projected } = finalGrade(catData);
 
   // Uncategorized assignments (no category_id or category not in list)
   const categorizedIds = new Set(categories.map((c) => c.id));
-  const uncategorized = assignments.filter(
+  const uncategorized = localAssignments.filter(
     (a) => !a.category_id || !categorizedIds.has(a.category_id)
   );
 
@@ -109,6 +114,28 @@ export default function GradeCard({ cls, assignments, initialCategories }) {
     } finally {
       setSaving(false);
     }
+  }
+
+  // ── Grade editing ──────────────────────────────────────────────────────────
+
+  function startGradeEdit(a) {
+    setEditingGradeId(a.id);
+    setGradeEditVal(String(a.grade ?? ""));
+  }
+
+  async function saveGrade(assignmentId) {
+    const grade = parseFloat(gradeEditVal);
+    if (isNaN(grade) || grade < 0 || grade > 100) return;
+    try {
+      await apiFetch(`/assignments/${assignmentId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ grade }),
+      });
+      setLocalAssignments((prev) =>
+        prev.map((a) => (a.id === assignmentId ? { ...a, grade } : a))
+      );
+      setEditingGradeId(null);
+    } catch {}
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -200,8 +227,29 @@ export default function GradeCard({ cls, assignments, initialCategories }) {
                     <tr key={a.id} style={isDone ? {} : s.pendingRow}>
                       <td style={s.td}>{a.title}</td>
                       <td style={{ ...s.td, textAlign: "right" }}>
-                        {isDone ? (
-                          <span style={{ color: gradeColor(a.grade), fontWeight: 600 }}>
+                        {isDone && editingGradeId === a.id ? (
+                          <div style={s.gradeEditRow}>
+                            <input
+                              style={s.gradeInlineInput}
+                              type="number" min="0" max="100" step="0.1"
+                              value={gradeEditVal}
+                              onChange={(e) => setGradeEditVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") saveGrade(a.id);
+                                if (e.key === "Escape") setEditingGradeId(null);
+                              }}
+                              autoFocus
+                            />
+                            <span style={{ fontSize: "11px", color: "#9ca3af" }}>%</span>
+                            <button style={s.gradeConfirmBtn} onClick={() => saveGrade(a.id)}>✓</button>
+                            <button style={s.gradeCancelBtn} onClick={() => setEditingGradeId(null)}>✕</button>
+                          </div>
+                        ) : isDone ? (
+                          <span
+                            style={{ color: gradeColor(a.grade), fontWeight: 600, cursor: "pointer", borderBottom: "1px dotted currentColor" }}
+                            onClick={() => startGradeEdit(a)}
+                            title="Click to edit grade"
+                          >
                             {a.grade}%
                           </span>
                         ) : (
@@ -349,4 +397,17 @@ const s = {
     fontSize: "13px", cursor: "pointer", color: "#6b6375",
   },
   empty: { margin: 0, fontSize: "14px", color: "#9ca3af", fontStyle: "italic" },
+  gradeEditRow: { display: "flex", alignItems: "center", gap: "4px", justifyContent: "flex-end" },
+  gradeInlineInput: {
+    width: "60px", padding: "2px 6px", border: "1px solid #e5e4e7",
+    borderRadius: "4px", fontSize: "13px", textAlign: "right",
+  },
+  gradeConfirmBtn: {
+    padding: "2px 7px", borderRadius: "4px", border: "none",
+    background: "#9b1b30", color: "#fff", fontSize: "12px", cursor: "pointer",
+  },
+  gradeCancelBtn: {
+    padding: "2px 7px", borderRadius: "4px", border: "1px solid #e5e4e7",
+    background: "#fff", fontSize: "12px", cursor: "pointer", color: "#6b6375",
+  },
 };

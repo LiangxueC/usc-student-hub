@@ -13,3 +13,9 @@ def get_user_id(token: str) -> str:
     payload = token.split(".")[1]
     payload += "=" * (-len(payload) % 4)
     return json.loads(base64.b64decode(payload))["sub"]
+
+
+def get_user_email(token: str) -> str:
+    payload = token.split(".")[1]
+    payload += "=" * (-len(payload) % 4)
+    return json.loads(base64.b64decode(payload)).get("email", "")

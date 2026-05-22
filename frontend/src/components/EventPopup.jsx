@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from "react";
 
 const POPUP_WIDTH = 300;
 
-export default function EventPopup({ event, pos, onClose, onMarkDone }) {
+const PRESET_COLORS = [
+  "#378ADD", "#1D9E75", "#639922", "#EF9F27",
+  "#E24B4A", "#9D2235", "#D4537E", "#7F77DD",
+  "#D85A30", "#888780", "#0F6E56", "#534AB7",
+];
+
+export default function EventPopup({ event, pos, onClose, onMarkDone, onColorChange, onDelete }) {
   const ref = useRef(null);
   const [showGrade, setShowGrade] = useState(false);
   const [gradeInput, setGradeInput] = useState("");
@@ -43,7 +49,7 @@ export default function EventPopup({ event, pos, onClose, onMarkDone }) {
 
       <div ref={ref} style={{ ...s.card, left, top }}>
         {/* Colour accent strip */}
-        <div style={{ ...s.strip, background: event.color?.border || "#6b7280" }} />
+        <div style={{ ...s.strip, background: event.color || "#6b7280" }} />
 
         <div style={s.body}>
           {/* Header */}
@@ -115,11 +121,46 @@ export default function EventPopup({ event, pos, onClose, onMarkDone }) {
             </div>
           )}
 
+          {/* Custom event details */}
+          {type === "custom" && (
+            <div style={s.details}>
+              {resource.notes && <Row icon="📝" text={resource.notes} />}
+              {onDelete && (
+                <button style={s.deleteEventBtn} onClick={() => onDelete(resource.id)}>
+                  Delete Event
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Todo details */}
           {type === "todo" && (
             <div style={s.details}>
               {resource.due_date && <Row icon="📅" text={`Due ${fmtDate(resource.due_date)}`} />}
               {resource.is_done  && <Row icon="✓" text="Completed" green />}
+            </div>
+          )}
+
+          {/* Color picker — shown whenever a color change handler is provided */}
+          {onColorChange && event.eventKey && (
+            <div style={s.colorSection}>
+              <span style={s.colorLabel}>Color</span>
+              <div style={s.swatchRow}>
+                {PRESET_COLORS.map(hex => (
+                  <button
+                    key={hex}
+                    title={hex}
+                    onClick={() => onColorChange(event.eventKey, hex)}
+                    style={{
+                      ...s.swatch,
+                      background: hex,
+                      boxShadow: event.color === hex
+                        ? `0 0 0 2px #fff, 0 0 0 3.5px ${hex}`
+                        : undefined,
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -142,7 +183,7 @@ function fmtDate(iso) {
   return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-const LABELS = { class: "Class", assignment: "Assignment", todo: "Todo", office_hours: "Office Hours" };
+const LABELS = { class: "Class", assignment: "Assignment", todo: "Todo", office_hours: "Office Hours", custom: "My Event" };
 
 const s = {
   backdrop: {
@@ -266,5 +307,46 @@ const s = {
     fontWeight: 600,
     fontSize: "12px",
     cursor: "pointer",
+  },
+  deleteEventBtn: {
+    marginTop: "2px",
+    padding: "6px 14px",
+    borderRadius: "7px",
+    border: "1px solid #fee2e2",
+    background: "#fff",
+    color: "#dc2626",
+    fontWeight: 600,
+    fontSize: "12px",
+    cursor: "pointer",
+    alignSelf: "flex-start",
+  },
+  colorSection: {
+    borderTop: "1px solid #f3f4f6",
+    paddingTop: "10px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+  },
+  colorLabel: {
+    fontSize: "10px",
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "0.07em",
+    color: "#9ca3af",
+  },
+  swatchRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "6px",
+  },
+  swatch: {
+    width: "20px",
+    height: "20px",
+    borderRadius: "50%",
+    border: "none",
+    cursor: "pointer",
+    padding: 0,
+    flexShrink: 0,
+    transition: "transform 0.1s",
   },
 };

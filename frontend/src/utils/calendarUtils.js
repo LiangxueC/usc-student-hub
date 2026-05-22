@@ -130,6 +130,7 @@ export function buildOfficeHoursEvents(officeHours, colorMap) {
 
       events.push({
         id: `oh-${oh.id}-w${week}`,
+        eventKey: `office_hours_${oh.class_id ?? oh.id}`,
         title: "Office Hours",
         start,
         end,
@@ -172,6 +173,7 @@ export function buildAllEvents(classes, assignments, todos, colorMap, officeHour
 
         events.push({
           id: `class-${cls.id}-w${week}-d${dow}`,
+          eventKey: `class_${cls.id}`,
           title: cls.name,
           start,
           end,
@@ -194,6 +196,7 @@ export function buildAllEvents(classes, assignments, todos, colorMap, officeHour
     end.setDate(end.getDate() + 1);
     events.push({
       id: `assignment-${a.id}`,
+      eventKey: `assignment_${a.id}`,
       title: `📝 ${a.title}`,
       start,
       end,
@@ -212,6 +215,7 @@ export function buildAllEvents(classes, assignments, todos, colorMap, officeHour
     end.setDate(end.getDate() + 1);
     events.push({
       id: `todo-${t.id}`,
+      eventKey: `todo_${t.id}`,
       title: `✓ ${t.title}`,
       start,
       end,
