@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,9 +14,15 @@ from app.reminder import reminder_loop
 
 app = FastAPI(title="USC Student Hub API")
 
+# ALLOWED_ORIGINS: comma-separated list of allowed origins.
+# Default includes localhost for local dev.
+# In production, set ALLOWED_ORIGINS=https://your-app.vercel.app in Render env vars.
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:4173")
+ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
